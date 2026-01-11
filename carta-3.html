@@ -4,13 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Para Agustina</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
+
+    <!-- Resource Hints para optimizar carga -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Preload fuentes críticas para splash screen -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@300;400;600;800&display=swap" as="style">
+
+    <!-- Google Fonts con display=swap para evitar FOIT -->
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Nunito:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
+
+    <!-- CSS Crítico inline para splash screen -->
+    <style>
+        /* CSS mínimo para splash screen mientras carga Tailwind */
+        #splash-screen-critical {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(-45deg, #fff0f5, #fce7f3, #fbcfe8, #fff0f5);
+            z-index: 10000;
+        }
+    </style>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -60,6 +87,85 @@
             overflow-x: hidden;
         }
 
+        /* Splash Screen (Pantalla de Carga Inicial) */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(-45deg, #fff0f5, #fce7f3, #fbcfe8, #fff0f5);
+            background-size: 400% 400%;
+            animation: gradient-x 15s ease infinite;
+            opacity: 1;
+            transition: opacity 0.8s ease-out;
+        }
+
+        #splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #splash-heart {
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #splash-heart:hover {
+            transform: scale(1.05);
+        }
+
+        #splash-heart:active {
+            transform: scale(0.95);
+        }
+
+        /* Pulso sutil para invitar al click */
+        @keyframes subtle-pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(190, 24, 93, 0.4);
+            }
+            50% {
+                transform: scale(1.03);
+                box-shadow: 0 0 0 15px rgba(190, 24, 93, 0);
+            }
+        }
+
+        #splash-heart {
+            animation: subtle-pulse 2s ease-in-out infinite;
+        }
+
+        /* Animación del corazón desde centro a posición final */
+        @keyframes heartToPosition {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                transform: translate(0, 0) scale(0.8);
+            }
+        }
+
+        .heart-transitioning {
+            animation: heartToPosition 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Ocultar contenido principal hasta que se haga click */
+        #main-content {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease-in 0.3s;
+        }
+
+        #main-content.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Glassmorphism Card */
         .glass-card {
             background: rgba(255, 255, 255, 0.65);
@@ -73,15 +179,15 @@
             opacity: 0;
             transform: translateY(30px) scale(0.98);
             transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
-            will-change: opacity, transform;
         }
 
         .fade-in-section.is-visible {
             opacity: 1;
             transform: translateY(0) scale(1);
+            will-change: auto;
         }
 
-        /* Pétalos cayendo (Optimizados) */
+        /* Pétalos cayendo (Optimizados para móviles) */
         .petal {
             position: fixed;
             top: -10%;
@@ -91,13 +197,25 @@
             animation-name: fall;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
+            will-change: transform;
         }
 
         @keyframes fall {
             0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.8; }
-            90% { opacity: 0.8; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
             100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Reducir animaciones en dispositivos de bajo rendimiento */
+        @media (prefers-reduced-motion: reduce) {
+            .petal, .animate-float, .animate-bounce {
+                animation: none !important;
+            }
+            .fade-in-section {
+                opacity: 1 !important;
+                transform: none !important;
+            }
         }
 
         /* Separadores de onda */
@@ -126,10 +244,23 @@
 </head>
 <body class="font-body text-love-text antialiased pb-20">
 
-    <!-- Fondo de partículas -->
-    <div id="petals-container"></div>
+    <!-- Splash Screen (Pantalla de Carga Inicial) -->
+    <div id="splash-screen">
+        <div id="splash-heart" class="glass-card p-8 rounded-full animate-float w-40 h-40 flex items-center justify-center shadow-2xl">
+            <svg class="w-20 h-20 text-love-dark drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </div>
+        <h2 class="font-script text-6xl text-love-dark mt-8 drop-shadow-sm">Mes 3</h2>
+        <p class="text-sm text-love-text/60 mt-4 animate-pulse">Toca el corazón</p>
+    </div>
 
-    <!-- Header / Hero -->
+    <!-- Contenido Principal (cargado pero oculto) -->
+    <div id="main-content">
+        <!-- Fondo de partículas -->
+        <div id="petals-container"></div>
+
+        <!-- Header / Hero -->
     <header class="min-h-[90vh] flex flex-col justify-center items-center text-center px-6 relative z-10">
         <div class="glass-card p-8 rounded-full mb-8 animate-float w-40 h-40 flex items-center justify-center">
             <!-- Icono Corazón SVG -->
@@ -181,7 +312,7 @@
                 Fuimos al cine a ver las nuevas aventuras de <strong class="text-love-dark">Judy y Nick</strong>, tomamos helado y, como siempre, nos besamos con pasión en el auto.
             </p>
             
-            <div class="glass-card p-6 rounded-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500">
+            <div class="glass-card p-6 rounded-2xl ">
                 <p class="text-lg italic">
                     "También conocí tu forma de trabajar y, codo a codo, <span class="font-bold not-italic text-love-dark">creamos agendas juntos</span>."
                 </p>
@@ -290,48 +421,92 @@
         <p>Hecho por un tipazo ENAMORADO❤️ .</p>
     </footer>
 
+    </div>
+    <!-- Fin del contenido principal -->
+
     <script>
-        // Intersection Observer para animaciones al hacer scroll
-        const observerOptions = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.1
-        };
+        // Cargar contenido en paralelo mientras se muestra el splash screen
+        let contentLoaded = false;
 
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
+        // Pre-cargar todo el contenido de forma asíncrona
+        window.addEventListener('DOMContentLoaded', () => {
+            contentLoaded = true;
 
-        document.querySelectorAll('.fade-in-section').forEach(section => {
-            observer.observe(section);
+            // Inicializar animaciones cuando el contenido esté listo
+            initializeScrollAnimations();
+            createPetals();
         });
 
-        // Lógica de partículas (optimizada: menos elementos, emojis simples)
+        // Manejar click en el corazón del splash screen
+        document.getElementById('splash-heart').addEventListener('click', function() {
+            const splashScreen = document.getElementById('splash-screen');
+            const mainContent = document.getElementById('main-content');
+
+            // Ocultar splash screen con animación suave
+            setTimeout(() => {
+                splashScreen.classList.add('hidden');
+                mainContent.classList.add('visible');
+            }, 100);
+
+            // Remover splash screen del DOM después de la transición
+            setTimeout(() => {
+                splashScreen.remove();
+            }, 1000);
+        });
+
+        // Intersection Observer para animaciones al hacer scroll (optimizado)
+        function initializeScrollAnimations() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '50px', // Cargar un poco antes de que sea visible
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target); // Dejar de observar una vez visible
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in-section').forEach(section => {
+                observer.observe(section);
+            });
+        }
+
+        // Lógica de partículas (optimizada para móviles: reducido a 8 pétalos)
         function createPetals() {
             const container = document.getElementById('petals-container');
-            const petalCount = 12; // Menos cantidad para mejor rendimiento
-            const shapes = ['🌸', '✨', '🤍']; 
+
+            // Detectar si es móvil para reducir aún más la cantidad
+            const isMobile = window.innerWidth < 768;
+            const petalCount = isMobile ? 6 : 8; // Menos pétalos en móviles
+            const shapes = ['🌸', '✨', '🤍'];
 
             for (let i = 0; i < petalCount; i++) {
                 const petal = document.createElement('div');
                 petal.classList.add('petal');
                 petal.innerText = shapes[Math.floor(Math.random() * shapes.length)];
                 petal.style.left = Math.random() * 100 + 'vw';
-                petal.style.fontSize = (Math.random() * 15 + 10) + 'px';
-                petal.style.animationDuration = (Math.random() * 10 + 10) + 's'; // Más lentas
-                petal.style.animationDelay = Math.random() * 5 + 's';
-                petal.style.color = 'rgba(190, 24, 93, 0.4)'; // Color suave
-                
+                petal.style.fontSize = (Math.random() * 12 + 10) + 'px'; // Ligeramente más pequeños
+                petal.style.animationDuration = (Math.random() * 12 + 12) + 's'; // Más lentas para suavidad
+                petal.style.animationDelay = Math.random() * 6 + 's';
+                petal.style.color = 'rgba(190, 24, 93, 0.35)'; // Color más suave
+
                 container.appendChild(petal);
             }
         }
 
-        createPetals();
+        // Optimización: remover will-change después de las animaciones
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.fade-in-section.is-visible').forEach(el => {
+                    el.style.willChange = 'auto';
+                });
+            }, 3000);
+        });
     </script>
 </body>
 </html>
